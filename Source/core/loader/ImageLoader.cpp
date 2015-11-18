@@ -422,6 +422,7 @@ void ImageLoader::notifyFinished(Resource* resource)
         // Only consider updating the protection ref-count of the Element immediately before returning
         // from this function as doing so might result in the destruction of this ImageLoader.
         updatedHasPendingEvent();
+        sourceImageLoaded(false);
         return;
     }
     if (resource->wasCanceled()) {
@@ -429,9 +430,11 @@ void ImageLoader::notifyFinished(Resource* resource)
         // Only consider updating the protection ref-count of the Element immediately before returning
         // from this function as doing so might result in the destruction of this ImageLoader.
         updatedHasPendingEvent();
+        sourceImageLoaded(false);
         return;
     }
     loadEventSender().dispatchEventSoon(this);
+    sourceImageLoaded(true);
 }
 
 LayoutImageResource* ImageLoader::layoutImageResource()
@@ -595,6 +598,20 @@ void ImageLoader::sourceImageChanged()
         handle->notifyImageSourceChanged();
     }
 #endif
+}
+
+void ImageLoader::sourceImageLoaded(bool isLoadSuccessful)
+{
+#if ENABLE(OILPAN)
+        for (auto& client : m_clients)
+            client.key->notifyImageLoaded(isLoadSuccessful);
+#else
+        for (auto& client : m_clients) {
+            ImageLoaderClient* handle = client;
+            handle->notifyImageLoaded(isLoadSuccessful);
+        }
+#endif
+
 }
 
 #if ENABLE(OILPAN)

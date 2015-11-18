@@ -38,4 +38,13 @@
 ] interface ImageData {
     readonly attribute long width;
     readonly attribute long height;
+
+    readonly attribute Uint8ClampedArray data;
+
+    [CallWith=ScriptState]    Promise<Blob>             toBlob (optional DOMString type, optional Dictionary encoderOptions);
+    [CallWith=ScriptState]    static Promise<ImageData> createFromSource(HTMLImageElement source);
+    [CallWith=ScriptState]    static Promise<ImageData> createFromSource(Blob source);
+    static DOMString          canDecodeType (DOMString mimeType);
+    static DOMString          canEncodeType (DOMString mimeType);
+    //Promise<boolean>                             decodeFromImage(HTMLImageElement source, long dstWidth, long dstHeight);
 };

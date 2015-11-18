@@ -41,6 +41,8 @@ class ImageLoaderClient : public WillBeGarbageCollectedMixin {
 public:
     virtual void notifyImageSourceChanged() = 0;
 
+    virtual void notifyImageLoaded(bool isLoadSuccessful) {};
+
     // Determines whether the observed ImageResource should have higher priority in the decoded resources cache.
     virtual bool requestsHighLiveResourceCachePriority() { return false; }
 
@@ -130,6 +132,7 @@ private:
 
     void setImageWithoutConsideringPendingLoadEvent(ImageResource*);
     void sourceImageChanged();
+    void sourceImageLoaded(bool isLoadSuccessful);
     void clearFailedLoadURL();
     void dispatchErrorEvent();
     void crossSiteOrCSPViolationOccurred(AtomicString);
