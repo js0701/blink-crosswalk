@@ -44,6 +44,7 @@
 #include "wtf/OwnPtr.h"
 #include "wtf/ThreadingPrimitives.h"
 #include "wtf/ThreadSafeRefCounted.h"
+#include "ImageDataHandle.h"
 
 namespace blink {
 
@@ -61,37 +62,8 @@ class FileReaderLoader;
 class ExecutionContext;
 class ImageData;
 
-class ImageDataLoaderClient : public ImageLoaderClient
-{
-public:
-    ImageDataLoaderClient(ImageData* imageData, HTMLImageElement* imageElement);
-    virtual ~ImageDataLoaderClient();
-    virtual void notifyImageSourceChanged() {};
-    virtual void notifyImageLoaded(bool isLoadSuccessful);
-private:
-    ImageData*           m_imageData;
-    HTMLImageElement*    m_imageElement;
-};
 
-class ImageDataFileReaderLoaderClient: public FileReaderLoaderClient
-{
-
-public:
-    ImageDataFileReaderLoaderClient(ImageData* imageData);
-    virtual ~ImageDataFileReaderLoaderClient();
-    virtual void didStartLoading() {};
-    virtual void didReceiveData() {};
-    virtual void didFinishLoading();
-    virtual void didFail(FileError::ErrorCode);
-
-private:
-    ImageData* m_imageData;
-    FileReaderLoader* m_fileReaderLoader;
-
-};
-
-
-class CORE_EXPORT ImageData final : public RefCountedWillBeGarbageCollectedFinalized<ImageData>, public ScriptWrappable {
+class CORE_EXPORT ImageData final : public ImageDataHandle {
     DEFINE_WRAPPERTYPEINFO();
 public:
     static PassRefPtrWillBeRawPtr<ImageData> create(const IntSize&);
@@ -100,83 +72,34 @@ public:
     static PassRefPtrWillBeRawPtr<ImageData> create(DOMUint8ClampedArray*, unsigned width, ExceptionState&);
     static PassRefPtrWillBeRawPtr<ImageData> create(DOMUint8ClampedArray*, unsigned width, unsigned height, ExceptionState&);
 
-    IntSize size() const { return m_size; }
-    int width() const { return m_size.width(); }
-    int height() const { return m_size.height(); }
+    virtual void*  getData();
+    virtual void   releaseLocalBuffer() { } //Do nothing
+
     const DOMUint8ClampedArray* data() const { return m_data.get(); }
     DOMUint8ClampedArray* data() { return m_data.get(); }
 
-    DEFINE_INLINE_TRACE() {visitor->trace(m_resolver); }
+    //DEFINE_INLINE_TRACE() {visitor->trace(m_resolver); }
 
     virtual v8::Handle<v8::Object> associateWithWrapper(v8::Isolate*, const WrapperTypeInfo*, v8::Handle<v8::Object> wrapper) override;
 
-    ScriptPromise             toBlob (ScriptState *scriptState, const String& type, const Dictionary& encoderOptions);
-    ScriptPromise             toBlob (ScriptState *scriptState, const String& type);
-    ScriptPromise             toBlob (ScriptState *scriptState, const Dictionary& encoderOptions);
-    ScriptPromise             toBlob (ScriptState *scriptState);
     static ScriptPromise      createFromSource (ScriptState *scriptState, HTMLImageElement* source);
     static ScriptPromise      createFromSource (ScriptState *scriptState, Blob* source);
-    static String             canDecodeType   (const String& mimeType);
-    static String             canEncodeType   (const String& mimeType);
-
     virtual ~ImageData();
 
+
+protected:
+    virtual void prepareRawData();
+
 private:
-
-    enum EncodeType {
-      EncodeJPEG,    // jpeg
-      EncodePNG,     // png
-      EncodeWEBP,    // webp
-      EncodeMaxType  //
-    };
-
-    friend class ImageDataLoaderClient;
-    friend class ImageDataFileReaderLoaderClient;
 
     explicit ImageData(const IntSize&);
     ImageData(const IntSize&, PassRefPtr<DOMUint8ClampedArray>);
     ImageData(HTMLImageElement* pElement, PassRefPtr<ScriptPromiseResolver> resolver);
     ImageData(Blob* blob, PassRefPtr<ScriptPromiseResolver> resolver);
 
-    ScriptPromise toBlobInternal(ScriptState *scriptState, EncodeType type,  int quality);
-
     static bool validateConstructorArguments(DOMUint8ClampedArray*, unsigned width, unsigned&, ExceptionState&);
-    void        imageCodecCallback(bool isSuccessful, bool isEncoder);
-    void        loadDataFailed();
-    void        decodeAsync();
-    void        encodeAsync();
-
-    void        startAsyncDecoding(int width, int height, PassRefPtr<SharedBuffer> encodedData);
-    void        startAsyncEncoding(EncodeType type);
-    void        startLoadingBlob(ExecutionContext* executionContext);
-
-    void        imageLoaded(bool isLoadSuccessful);
-    void        finishFileReaderLoading();
-
-    static EncodeType decideEncodeType(const String& mimeType);
-
-    IntSize m_size;
     RefPtr<DOMUint8ClampedArray> m_data;
 
-    OwnPtr<ImageDataLoaderClient>              m_imageDataLoaderClient;
-    OwnPtr<ImageDataFileReaderLoaderClient>    m_ImageDataFileReaderLoaderClient;
-
-    RefPtr<HTMLImageElement> m_imageElement;
-    Blob* m_refedBlob;
-    Blob* m_createdBlob;
-    RefPtr<BlobDataHandle> m_dataHandle;
-
-    RefPtrWillBeMember<ScriptPromiseResolver> m_resolver;
-    RefPtr<ImageFrameGenerator> m_ifGenerator;
-    RefPtr<SharedBuffer> m_imageBuffer;
-
-    OwnPtr<FileReaderLoader> m_loader;
-
-    //for encoder
-    int m_encoderQuality;
-    EncodeType m_encodeType;
-
-    OwnPtr<WebThread> m_thread;
 };
 
 } // namespace blink

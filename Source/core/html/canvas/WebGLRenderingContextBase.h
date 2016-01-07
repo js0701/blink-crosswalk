@@ -66,6 +66,7 @@ class HTMLImageElement;
 class HTMLVideoElement;
 class ImageBuffer;
 class ImageData;
+class ImageDataHandle;
 class IntSize;
 class OESElementIndexUint;
 class OESStandardDerivatives;
@@ -246,6 +247,8 @@ public:
         GLenum format, GLenum type, DOMArrayBufferView*, ExceptionState&);
     void texImage2D(GLenum target, GLint level, GLenum internalformat,
         GLenum format, GLenum type, ImageData*, ExceptionState&);
+    void texImage2D(GLenum target, GLint level, GLenum internalformat,
+        GLenum format, GLenum type, ImageDataHandle*, ExceptionState&);
     void texImage2D(GLenum target, GLint level, GLenum internalformat,
         GLenum format, GLenum type, HTMLImageElement*, ExceptionState&);
     void texImage2D(GLenum target, GLint level, GLenum internalformat,

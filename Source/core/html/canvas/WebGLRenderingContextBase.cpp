@@ -39,6 +39,7 @@
 #include "core/html/HTMLImageElement.h"
 #include "core/html/HTMLVideoElement.h"
 #include "core/html/ImageData.h"
+#include "core/html/ImageDataHandle.h"
 #include "core/html/canvas/ANGLEInstancedArrays.h"
 #include "core/html/canvas/CHROMIUMSubscribeUniform.h"
 #include "core/html/canvas/CHROMIUMValuebuffer.h"
@@ -3642,6 +3643,30 @@ void WebGLRenderingContextBase::texImage2D(GLenum target, GLint level, GLenum in
     if (m_unpackAlignment != 1)
         webContext()->pixelStorei(GL_UNPACK_ALIGNMENT, 1);
     texImage2DBase(target, level, internalformat, pixels->width(), pixels->height(), 0, format, type, needConversion ? data.data() : pixels->data()->data(), exceptionState);
+    if (m_unpackAlignment != 1)
+        webContext()->pixelStorei(GL_UNPACK_ALIGNMENT, m_unpackAlignment);
+}
+
+void WebGLRenderingContextBase::texImage2D(GLenum target, GLint level, GLenum internalformat,
+    GLenum format, GLenum type, ImageDataHandle* pixels, ExceptionState& exceptionState)
+{
+    if (isContextLost() || !pixels || !validateTexFunc("texImage2D", NotTexSubImage2D, SourceImageData, target, level, internalformat, pixels->width(), pixels->height(), 0, format, type, 0, 0))
+        return;
+    Vector<uint8_t> data;
+    bool needConversion = true;
+    // The data from ImageData is always of format RGBA8.
+    // No conversion is needed if destination format is RGBA and type is USIGNED_BYTE and no Flip or Premultiply operation is required.
+    if (!m_unpackFlipY && !m_unpackPremultiplyAlpha && format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+        needConversion = false;
+    else {
+        if (!WebGLImageConversion::extractImageData((const uint8_t*)(pixels->getData()), pixels->size(), format, type, m_unpackFlipY, m_unpackPremultiplyAlpha, data)) {
+            synthesizeGLError(GL_INVALID_VALUE, "texImage2D", "bad image data");
+            return;
+        }
+    }
+    if (m_unpackAlignment != 1)
+        webContext()->pixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    texImage2DBase(target, level, internalformat, pixels->width(), pixels->height(), 0, format, type, needConversion ? data.data() : pixels->getData(), exceptionState);
     if (m_unpackAlignment != 1)
         webContext()->pixelStorei(GL_UNPACK_ALIGNMENT, m_unpackAlignment);
 }

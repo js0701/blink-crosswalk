@@ -625,6 +625,9 @@ typedef unrestricted float GLclampf;
         GLenum format, GLenum type, ImageData? pixels);
     [RaisesException] void texImage2D(
         GLenum target, GLint level, GLenum internalformat,
+        GLenum format, GLenum type, ImageDataHandle pixels);
+    [RaisesException] void texImage2D(
+        GLenum target, GLint level, GLenum internalformat,
         GLenum format, GLenum type, HTMLImageElement image);
     [RaisesException] void texImage2D(
         GLenum target, GLint level, GLenum internalformat,
